@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" shape-rendering="crispEdges">
+  <rect width="192" height="192" fill="#06060F"/>
+  <!-- Cyan T-tetromino blocks, 4×4 pixel cells at 36px each -->
+  <!-- Top row: 3 blocks -->
+  <rect x="18"  y="54" width="36" height="36" fill="#00F0F0"/>
+  <rect x="54"  y="54" width="36" height="36" fill="#00F0F0"/>
+  <rect x="90"  y="54" width="36" height="36" fill="#00F0F0"/>
+  <!-- Bottom centre: 1 block -->
+  <rect x="54"  y="90" width="36" height="36" fill="#00F0F0"/>
+  <!-- Highlight edges (lighter top/left) -->
+  <rect x="18"  y="54" width="36" height="4"  fill="#80F8F8"/>
+  <rect x="18"  y="54" width="4"  height="36" fill="#80F8F8"/>
+  <rect x="54"  y="54" width="36" height="4"  fill="#80F8F8"/>
+  <rect x="54"  y="54" width="4"  height="36" fill="#80F8F8"/>
+  <rect x="90"  y="54" width="36" height="4"  fill="#80F8F8"/>
+  <rect x="90"  y="54" width="4"  height="36" fill="#80F8F8"/>
+  <rect x="54"  y="90" width="36" height="4"  fill="#80F8F8"/>
+  <rect x="54"  y="90" width="4"  height="36" fill="#80F8F8"/>
+  <!-- Shadow edges (darker bottom/right) -->
+  <rect x="18"  y="86" width="36" height="4"  fill="#007878"/>
+  <rect x="50"  y="54" width="4"  height="36" fill="#007878"/>
+  <rect x="54"  y="86" width="36" height="4"  fill="#007878"/>
+  <rect x="86"  y="54" width="4"  height="36" fill="#007878"/>
+  <rect x="90"  y="86" width="36" height="4"  fill="#007878"/>
+  <rect x="122" y="54" width="4"  height="36" fill="#007878"/>
+  <rect x="54"  y="122" width="36" height="4" fill="#007878"/>
+  <rect x="86"  y="90" width="4"  height="36" fill="#007878"/>
+  <!-- Pixel corner cutouts -->
+  <rect x="18"  y="54" width="4" height="4" fill="#06060F"/>
+  <rect x="50"  y="54" width="4" height="4" fill="#06060F"/>
+  <rect x="90"  y="54" width="4" height="4" fill="#06060F"/>
+  <rect x="122" y="54" width="4" height="4" fill="#06060F"/>
+  <rect x="18"  y="86" width="4" height="4" fill="#06060F"/>
+  <rect x="50"  y="86" width="4" height="4" fill="#06060F"/>
+  <rect x="122" y="86" width="4" height="4" fill="#06060F"/>
+  <rect x="54"  y="122" width="4" height="4" fill="#06060F"/>
+  <rect x="86"  y="122" width="4" height="4" fill="#06060F"/>
+  <!-- Grid lines between blocks -->
+  <rect x="54"  y="54" width="2"  height="36" fill="#06060F"/>
+  <rect x="90"  y="54" width="2"  height="36" fill="#06060F"/>
+  <rect x="54"  y="90" width="36" height="2"  fill="#06060F"/>
+  <!-- TETRADO label -->
+  <text x="96" y="162" font-family="monospace" font-size="16" fill="#00F0F0"
+        text-anchor="middle" letter-spacing="4">TETRADO</text>
+</svg>
