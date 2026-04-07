@@ -20,14 +20,14 @@ const PTS_TASK=100,PTS_EARLY=50;
 const DAILY_T=[{count:3,pts:150},{count:5,pts:300},{count:10,pts:750}];
 const STREAK_MS=[{days:7,pts:200},{days:14,pts:400},{days:31,pts:1000},{days:100,pts:3000},{days:200,pts:6000},{days:300,pts:10000},{days:365,pts:15000}];
 const CATEGORIES={
-  home:{label:'HOME',col:'#F0F000',hi:'#F8F880',lo:'#787800',px:['.....##.....','....####....','...######...','..########..','.##########.','.##......##.','.##......##.','.##..##..##.','.##..##..##.','.##..##..##.','.##########.','............']},
-  work:{label:'WORK',col:'#0000F0',hi:'#8080F8',lo:'#000078',px:['............','....####....','...##..##...','.##########.','.##########.','.###....###.','.###....###.','.##########.','.###....###.','.###....###.','.##########.','............']},
-  personal:{label:'PERSONAL',col:'#00F0F0',hi:'#80F8F8',lo:'#007878',px:['....####....','...######...','...######...','....####....','....####....','.##########.','...######...','...######...','....####....','..##....##..','.##......##.','.##......##.']},
-  goals:{label:'GOALS',col:'#F0A000',hi:'#F8D080',lo:'#785000',px:['.##########.','############','.##########.','.##########.','.##########.','..########..','...######...','....####....','....####....','....####....','...######...','..########..']},
-  health:{label:'HEALTH',col:'#F00000',hi:'#F88080',lo:'#780000',px:['............','.####.####..','############','############','############','.##########.','..########..','...######...','....####....','.....##.....','............','............']},
-  social:{label:'SOCIAL',col:'#00F000',hi:'#80F880',lo:'#007800',px:['.##....##...','.##....##...','.##....##...','####..####..','####..####..','####..####..','.##....##...','.##....##...','##......##..','##......##..','##......##..','............']},
-  quest:{label:'SIDE QUEST',col:'#A000F0',hi:'#D060F8',lo:'#500078',px:['.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','..########..','.....##.....','.....##.....','....####....']},
-  creative:{label:'CREATIVE',col:'#FF6B9D',hi:'#FF9DBB',lo:'#CC4070',px:['..........##','.........##.','........##..','.......##...','......##....','.....##.....','....##......','...##.......','..##........','.####.......','.####.......','.##.........']},
+  home:{label:'HOME',col:'#F0F000',lc:'#4A3E00',hi:'#F8F880',lo:'#787800',px:['.....##.....','....####....','...######...','..########..','.##########.','.##......##.','.##......##.','.##..##..##.','.##..##..##.','.##..##..##.','.##########.','............']},
+  work:{label:'WORK',col:'#0000F0',lc:'#0000AA',hi:'#8080F8',lo:'#000078',px:['............','....####....','...##..##...','.##########.','.##########.','.###....###.','.###....###.','.##########.','.###....###.','.###....###.','.##########.','............']},
+  personal:{label:'PERSONAL',col:'#00F0F0',lc:'#004444',hi:'#80F8F8',lo:'#007878',px:['....####....','...######...','...######...','....####....','....####....','.##########.','...######...','...######...','....####....','..##....##..','.##......##.','.##......##.']},
+  goals:{label:'GOALS',col:'#F0A000',lc:'#664200',hi:'#F8D080',lo:'#785000',px:['.##########.','############','.##########.','.##########.','.##########.','..########..','...######...','....####....','....####....','....####....','...######...','..########..']},
+  health:{label:'HEALTH',col:'#F00000',lc:'#880000',hi:'#F88080',lo:'#780000',px:['............','.####.####..','############','############','############','.##########.','..########..','...######...','....####....','.....##.....','............','............']},
+  social:{label:'SOCIAL',col:'#00F000',lc:'#005500',hi:'#80F880',lo:'#007800',px:['.##....##...','.##....##...','.##....##...','####..####..','####..####..','####..####..','.##....##...','.##....##...','##......##..','##......##..','##......##..','............']},
+  quest:{label:'SIDE QUEST',col:'#A000F0',lc:'#580080',hi:'#D060F8',lo:'#500078',px:['.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','.....##.....','..########..','.....##.....','.....##.....','....####....']},
+  creative:{label:'CREATIVE',col:'#FF6B9D',lc:'#8B0040',hi:'#FF9DBB',lo:'#CC4070',px:['..........##','.........##.','........##..','.......##...','......##....','.....##.....','....##......','...##.......','..##........','.####.......','.####.......','.##.........']},
 };
 const CAT_KEYS=Object.keys(CATEGORIES);
 const COLLAPSE_THRESHOLD=4;
@@ -93,10 +93,10 @@ function AvatarCanvas({grid,size,style}){
   useEffect(function(){var cv=ref.current;if(!cv||!grid)return;var ctx=cv.getContext('2d');ctx.clearRect(0,0,24,24);for(var r=0;r<24;r++)for(var c=0;c<24;c++){if(grid[r][c]){ctx.fillStyle=grid[r][c];ctx.fillRect(c,r,1,1);}}},[grid]);
   return <canvas ref={ref} width={24} height={24} style={Object.assign({width:size,height:size,imageRendering:'pixelated',display:'block'},style)}/>;
 }
-function IconCanvas({catKey,size}){
+function IconCanvas({catKey,size,dark}){
   size=size||20;
   var ref=useRef(null);
-  useEffect(function(){var cv=ref.current;var cat=CATEGORIES[catKey];if(!cv||!cat)return;var ctx=cv.getContext('2d');ctx.clearRect(0,0,12,12);cat.px.forEach(function(row,r){Array.from(row).forEach(function(ch,c){if(ch==='#'){ctx.fillStyle=cat.col;ctx.fillRect(c,r,1,1);}});});},[catKey]);
+  useEffect(function(){var cv=ref.current;var cat=CATEGORIES[catKey];if(!cv||!cat)return;var ctx=cv.getContext('2d');ctx.clearRect(0,0,12,12);var color=(dark===false)?cat.lc:cat.col;cat.px.forEach(function(row,r){Array.from(row).forEach(function(ch,c){if(ch==='#'){ctx.fillStyle=color;ctx.fillRect(c,r,1,1);}});});},[catKey,dark]);
   return <canvas ref={ref} width={12} height={12} style={{width:size,height:size,imageRendering:'pixelated',display:'block'}}/>;
 }
 
@@ -209,7 +209,7 @@ function CategoryPicker({currentCat,onSelect,onClose,dark}){
         <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:'8px',marginBottom:'12px'}}>
           {CAT_KEYS.map(function(key){var cat=CATEGORIES[key];var on=currentCat===key;return(
             <div key={key} onClick={function(){onSelect(key);onClose();}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',padding:'10px 4px',cursor:'pointer',background:on?cat.col+'22':t.inp,border:'2px solid '+(on?cat.col:t.panelBdr),transition:'all .12s'}}>
-              <IconCanvas catKey={key} size={22}/>
+              <IconCanvas catKey={key} size={22} dark={dark}/>
               <span style={{fontSize:'4px',color:on?cat.col:t.muted,letterSpacing:'1px',textAlign:'center',lineHeight:1.5}}>{cat.label}</span>
             </div>
           );})}
@@ -449,7 +449,7 @@ function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCateg
           {[{t:0,l:0},{t:0,r:0},{b:0,l:0},{b:0,r:0}].map(function(p,j){return <span key={j} style={{position:'absolute',width:'5px',height:'5px',background:th.bg,top:p.t!==undefined?0:'auto',bottom:p.b!==undefined?0:'auto',left:p.l!==undefined?0:'auto',right:p.r!==undefined?0:'auto'}}/>;})}
           {/* Category icon */}
           <div onClick={function(){if(!t.done)setShowPicker(true);}} style={{width:'40px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',borderRight:'1px solid '+(cat?cat.col+'35':(dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.08)')),cursor:t.done?'default':'pointer',background:cat?cat.col+'0C':'transparent'}}>
-            {cat?<IconCanvas catKey={t.category} size={20}/>:<span style={{color:txtCol+'22',fontSize:'16px',lineHeight:1,fontFamily:'monospace',userSelect:'none'}}>+</span>}
+            {cat?<IconCanvas catKey={t.category} size={20} dark={dark}/>:<span style={{color:txtCol+'22',fontSize:'16px',lineHeight:1,fontFamily:'monospace',userSelect:'none'}}>+</span>}
           </div>
           {/* Content */}
           <div style={{flex:1,padding:'11px 8px 10px 10px',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
