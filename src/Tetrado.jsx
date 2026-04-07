@@ -335,13 +335,14 @@ function SettingsPage({notifSettings,onSaveNotif,dark,onToggleDark,onClose}){
 }
 
 // About / Profile page — nav hub
-function AboutPage({user,dark,score,streak,onEditProfile,onOpenSettings,onClose}){
+function AboutPage({user,dark,score,streak,hasUpdate,onEditProfile,onOpenSettings,onClose}){
   var t=TH(dark);
   var name=user?user.username:'PLAYER';
   var navRows=[
     {label:'EDIT PROFILE',icon:'◈',action:onEditProfile},
     {label:'SETTINGS',icon:'⚙',action:onOpenSettings},
   ];
+  if(hasUpdate){navRows.push({label:'UPDATE TETRADO',icon:'●',action:function(){window.location.reload();},update:true});}
   return(
     <div style={{position:'fixed',inset:0,zIndex:500,background:t.bg,overflowY:'auto',fontFamily:"'Press Start 2P', monospace",display:'flex',flexDirection:'column'}}>
       <div className="page-safe-hdr" style={{padding:'0 22px 16px',borderBottom:'2px solid '+t.hdrBdr,flexShrink:0,display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
@@ -366,9 +367,9 @@ function AboutPage({user,dark,score,streak,onEditProfile,onOpenSettings,onClose}
       {/* Nav rows */}
       <div style={{padding:'12px 22px',flexShrink:0}}>
         {navRows.map(function(row){return(
-          <button key={row.label} onClick={row.action} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',background:'transparent',border:'none',borderBottom:'1px solid '+t.sep,color:t.fg,fontFamily:"'Press Start 2P', monospace",fontSize:'7px',padding:'16px 4px',cursor:'pointer',letterSpacing:'1px'}}>
-            <span style={{display:'flex',alignItems:'center',gap:'12px'}}><span style={{color:t.accent,fontSize:'12px'}}>{row.icon}</span>{row.label}</span>
-            <span style={{color:t.muted,fontSize:'10px'}}>›</span>
+          <button key={row.label} onClick={row.action} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',background:row.update?'rgba(255,50,50,0.12)':'transparent',border:'none',borderBottom:'1px solid '+t.sep,color:row.update?'#FF4444':t.fg,fontFamily:"'Press Start 2P', monospace",fontSize:'7px',padding:'16px 4px',cursor:'pointer',letterSpacing:'1px'}}>
+            <span style={{display:'flex',alignItems:'center',gap:'12px'}}><span style={{color:row.update?'#FF4444':t.accent,fontSize:'12px'}}>{row.icon}</span>{row.label}</span>
+            <span style={{color:row.update?'#FF4444':t.muted,fontSize:'10px'}}>›</span>
           </button>
         );})}
       </div>
@@ -394,7 +395,8 @@ function AboutPage({user,dark,score,streak,onEditProfile,onOpenSettings,onClose}
 // Task block with swipe, drag handle, and inline edit
 function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCategoryChange,onDragStart,isDragging,editingId,onEditSave,onEditCancel}){
   var [showPicker,setShowPicker]=useState(false);
-  var [swipeHint,setSwipeHint]=useState(0); // -1=left(complete) 0=none 1=right(edit)
+  var [swipeX,setSwipeX]=useState(0); // px translation
+  var [swiping,setSwiping]=useState(false);
   var swipeRef=useRef(null);
   var isEditing=editingId===t.id;
   var [editText,setEditText]=useState(t.text);
@@ -404,35 +406,46 @@ function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCateg
   var di=!t.done?dueInfo(t.due,today):null;
   var txtCol=th.blkTxt(c);var metaCol=th.blkMeta(c);
   var bdrHi=dark?c.hi:c.main;var bdrLo=dark?c.lo:c.ltx;
+  var SWIPE_THRESHOLD=72;
 
   function onTouchStart(e){
     if(t.done)return;
-    swipeRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY};
-    setSwipeHint(0);
+    swipeRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY,moved:false};
+    setSwiping(false);
   }
   function onTouchMove(e){
     if(!swipeRef.current||t.done)return;
     var dx=e.touches[0].clientX-swipeRef.current.x;
     var dy=e.touches[0].clientY-swipeRef.current.y;
-    if(Math.abs(dx)<Math.abs(dy))return;
-    var hint=dx>50?1:dx<-50?-1:0;
-    if(hint!==swipeHint)setSwipeHint(hint);
+    if(!swipeRef.current.moved&&Math.abs(dy)>Math.abs(dx))return; // vertical scroll wins
+    swipeRef.current.moved=true;
+    var clamped=Math.max(-SWIPE_THRESHOLD*1.3,Math.min(SWIPE_THRESHOLD*1.3,dx));
+    setSwipeX(clamped);setSwiping(true);
   }
   function onTouchEnd(){
-    if(!swipeRef.current||t.done){swipeRef.current=null;setSwipeHint(0);return;}
-    if(swipeHint===-1)onComplete();
-    else if(swipeHint===1&&!isEditing){setEditText(t.text);setEditDue(t.due||today);/* trigger edit */onEditSave(t.id,'__open__',t.due);}
-    swipeRef.current=null;setSwipeHint(0);
+    if(!swipeRef.current||t.done){swipeRef.current=null;setSwipeX(0);setSwiping(false);return;}
+    if(swipeX<=-SWIPE_THRESHOLD){onComplete();}
+    else if(swipeX>=SWIPE_THRESHOLD&&!isEditing){setEditText(t.text);setEditDue(t.due||today);onEditSave(t.id,'__open__',t.due);}
+    swipeRef.current=null;
+    setSwipeX(0);setSwiping(false);
   }
 
-  var swipeBg=swipeHint===1?'rgba(0,200,240,0.12)':swipeHint===-1?'rgba(80,220,80,0.12)':'transparent';
+  var showComplete=swipeX<-20;
+  var showEdit=swipeX>20;
 
   return(
     <>
       {showPicker&&<CategoryPicker currentCat={t.category||null} onSelect={function(key){onCategoryChange(key);}} onClose={function(){setShowPicker(false);}} dark={dark}/>}
       <div className={'blk'+(dropping?' dropping':'')+(isClearing?' clearing':'')+(isDragging?' dragging':'')}
-        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-        <div style={{display:'flex',minHeight:'80px',background:swipeHint!==0?swipeBg:th.blkBg(c),borderTop:'3px solid '+bdrHi,borderLeft:'3px solid '+bdrHi+'70',borderRight:'3px solid '+bdrLo+'CC',borderBottom:'3px solid '+bdrLo+'CC',position:'relative',opacity:t.done?0.42:isDragging?0.65:1,transition:'background .1s'}}>
+        style={{userSelect:'none',WebkitUserSelect:'none',position:'relative',overflow:'hidden'}}>
+        {/* Swipe action backgrounds */}
+        {!t.done&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'space-between',pointerEvents:'none'}}>
+          <div style={{width:'72px',height:'100%',background:'rgba(0,200,80,0.22)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',opacity:showEdit?1:0,transition:'opacity .1s'}}>✏️</div>
+          <div style={{width:'72px',height:'100%',background:'rgba(80,220,80,0.22)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',opacity:showComplete?1:0,transition:'opacity .1s'}}>✅</div>
+        </div>}
+        <div
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+          style={{display:'flex',minHeight:'80px',background:th.blkBg(c),borderTop:'3px solid '+bdrHi,borderLeft:'3px solid '+bdrHi+'70',borderRight:'3px solid '+bdrLo+'CC',borderBottom:'3px solid '+bdrLo+'CC',position:'relative',opacity:t.done?0.42:isDragging?0.65:1,transform:swiping?'translateX('+swipeX+'px)':'translateX(0)',transition:swiping?'none':'transform .2s ease'}}>
           {[{t:0,l:0},{t:0,r:0},{b:0,l:0},{b:0,r:0}].map(function(p,j){return <span key={j} style={{position:'absolute',width:'5px',height:'5px',background:th.bg,top:p.t!==undefined?0:'auto',bottom:p.b!==undefined?0:'auto',left:p.l!==undefined?0:'auto',right:p.r!==undefined?0:'auto'}}/>;})}
           {/* Category icon */}
           <div onClick={function(){if(!t.done)setShowPicker(true);}} style={{width:'40px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',borderRight:'1px solid '+(cat?cat.col+'35':(dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.08)')),cursor:t.done?'default':'pointer',background:cat?cat.col+'0C':'transparent'}}>
@@ -447,20 +460,14 @@ function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCateg
               {t.done&&<span style={{color:dark?'rgba(80,255,80,0.5)':c.ltx+'88'}}>CLEARED</span>}
             </div>
           </div>
-          {/* Right side: drag handle + actions */}
+          {/* Right side: drag handle + delete */}
           <div style={{width:'36px',flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'space-between',padding:'8px 4px',borderLeft:'1px solid '+(dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)')}}>
-            {/* Drag handle */}
             {!t.done&&<div
               onTouchStart={function(e){e.stopPropagation();onDragStart(t.id,e.touches[0].clientY);}}
               onMouseDown={function(e){e.stopPropagation();onDragStart(t.id,e.clientY);}}
               style={{cursor:'grab',padding:'4px',color:metaCol,fontSize:'14px',lineHeight:1,userSelect:'none',touchAction:'none'}}
-              title="Drag to reorder"
             >⠿</div>}
-            {/* Action buttons */}
-            <div className="acts" style={{display:'flex',flexDirection:'column',gap:'4px',opacity:t.done?1:0,transition:'opacity .15s'}}>
-              {!t.done&&<button className="act ok" onClick={onComplete} style={{fontSize:'7px',padding:'4px 6px'}}>✓</button>}
-              <button className="act del" onClick={onRemove} style={{fontSize:'7px',padding:'4px 6px'}}>✕</button>
-            </div>
+            {t.done&&<button onClick={onRemove} style={{background:'transparent',border:'none',color:metaCol,fontSize:'14px',cursor:'pointer',padding:'4px',lineHeight:1}}>✕</button>}
           </div>
         </div>
         {/* Inline edit row */}
@@ -487,11 +494,10 @@ function NewTaskPanel({hint,dark,input,dueDate,dueSelected,today,onInput,onSelec
       <div style={{fontSize:'7px',letterSpacing:'2px',padding:'18px 0 10px',marginBottom:'10px',borderBottom:'1px solid '+th.sep,color:th.lblToday}}>NEW TASK</div>
       <div style={{background:th.panel,border:'2px solid '+th.panelBdr,padding:'14px'}}>
         <div style={{position:'relative',display:'flex',gap:'0',marginBottom:'12px'}}>
-          {hint.musical&&<NoteButton dark={dark} onActivate={function(){}}/>}
           <input ref={inputRef} className="ti" placeholder={hint.text} value={input}
             onChange={function(e){onInput(e.target.value);}}
             onKeyDown={function(e){if(e.key==='Enter'&&hasText&&dueSelected)onDrop();}}
-            style={{flex:1,background:th.inp,borderColor:th.inpBdr,color:th.inpFg,borderLeft:hint.musical?'none':'1px solid '+th.inpBdr}}/>
+            style={{flex:1,background:th.inp,borderColor:th.inpBdr,color:th.inpFg}}/>
         </div>
         {hasText&&(
           <div style={{animation:'fadeIn .18s ease both'}}>
@@ -544,7 +550,17 @@ export default function Tetrado(){
   // Drag state
   var [draggingId,setDraggingId]=useState(null);
   var [orderedActiveIds,setOrderedActiveIds]=useState([]);
-  var scrollContainerRef=useRef(null);
+  var [hasUpdate,setHasUpdate]=useState(false);
+  var APP_VERSION='1.0.0';
+
+  // Check for updates by comparing stored version
+  useEffect(function(){
+    try{
+      var stored=localStorage.getItem('tetrado-version');
+      if(stored&&stored!==APP_VERSION)setHasUpdate(true);
+      localStorage.setItem('tetrado-version',APP_VERSION);
+    }catch(e){void e;}
+  },[]);
   var colorRef=useRef(0);
   var inputEl=useRef(null);
   var newTaskPanelRef=useRef(null);
@@ -610,7 +626,18 @@ export default function Tetrado(){
     };
   },[orderedActiveIds]);
 
-  var addAward=useCallback(function(award){setScore(function(s){return s+award.pts;});setAwards(function(p){return p.concat([award]);});},[]);
+  // Check for lapsed tasks (overdue by 1+ days) and deduct 50pts each, once per task per day
+  var checkLapsedTasks=useCallback(function(taskList){
+    var today=getToday();
+    var lapsed=taskList.filter(function(t){return !t.done&&t.due&&dateDiff(t.due,today)<0&&t.lastPenaltyDate!==today;});
+    if(lapsed.length===0)return taskList;
+    var deduction=lapsed.length*50;
+    setScore(function(s){return Math.max(0,s-deduction);});
+    return taskList.map(function(t){
+      var isLapsed=lapsed.find(function(l){return l.id===t.id;});
+      return isLapsed?Object.assign({},t,{lastPenaltyDate:today}):t;
+    });
+  },[]);
 
   var checkStreak=useCallback(function(cur,lastOpen,msClaimed){
     if(lastOpen===TODAY)return;
@@ -649,7 +676,8 @@ export default function Tetrado(){
         var r2=await storage.get('tetrado-v3');
         if(r2&&r2.value){
           var d=JSON.parse(r2.value);
-          setTasks(d.tasks||[]);colorRef.current=d.ci||0;setScore(d.score||0);setDark(d.dark!==false);
+          var loadedTasks=checkLapsedTasks(d.tasks||[]);
+          setTasks(loadedTasks);colorRef.current=d.ci||0;setScore(d.score||0);setDark(d.dark!==false);
           var gd={streak:d.streak||0,lastOpenDate:d.lastOpenDate||null,dailyCompletions:d.dailyCompletions||{},dailyBonusClaimed:d.dailyBonusClaimed||{},streakMsClaimed:d.streakMsClaimed||0};
           gameRef.current=gd;setStreak(gd.streak);
           checkStreak(gd.streak,gd.lastOpenDate,gd.streakMsClaimed);
@@ -681,7 +709,9 @@ export default function Tetrado(){
     var ci=colorRef.current%PIECES.length;colorRef.current++;
     setTasks(function(p){return [{id:id,text:input.trim(),created:TODAY,due:dueDate||TODAY,done:false,ci:ci,category:null}].concat(p);});
     setDropping(id);setTimeout(function(){setDropping(null);},750);
+    var wasMusical=hint.musical;
     setInput('');setDueDate('');setDueSelected(false);if(inputEl.current)inputEl.current.focus();
+    if(wasMusical){setTimeout(function(){setSongGame(true);},900);}
   }
 
   function completeTask(id,taskName,due){
@@ -763,7 +793,7 @@ export default function Tetrado(){
 
   return(
     <div style={{fontFamily:"'Press Start 2P', monospace",background:th.bg,minHeight:'100vh',backgroundImage:'linear-gradient('+th.grid+' 1px,transparent 1px),linear-gradient(90deg,'+th.grid+' 1px,transparent 1px)',backgroundSize:'28px 28px',maxWidth:'560px',margin:'0 auto',display:'flex',flexDirection:'column',height:'100dvh',overflow:'hidden',position:'relative'}}>
-      <style>{'@import url(\'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap\');*{box-sizing:border-box;}.page-safe-hdr{padding-top:max(22px,env(safe-area-inset-top,22px))!important;}.sticky-hdr{position:sticky;top:0;top:env(safe-area-inset-top,0);z-index:100;padding-top:max(16px,env(safe-area-inset-top,16px));}@keyframes dropIn{0%{transform:translateY(-130px);opacity:0;}55%{transform:translateY(7px);}75%{transform:translateY(-3px);}100%{transform:translateY(0);opacity:1;}}@keyframes lineClear{0%{transform:scaleY(1);opacity:1;}12%{filter:brightness(5);}40%{transform:scaleY(.55) scaleX(1.04);opacity:.8;filter:brightness(2);}70%{transform:scaleY(.12);opacity:.25;}100%{transform:scaleY(0);opacity:0;margin-bottom:0!important;min-height:0!important;}}@keyframes urgBlink{0%,100%{opacity:.7}50%{opacity:1}}@keyframes coinFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}85%{opacity:.9;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-55px);opacity:0;}}@keyframes certIn{0%{transform:scale(.82);opacity:0;}100%{transform:scale(1);opacity:1;}}@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}.blk.dropping{animation:dropIn .7s cubic-bezier(.22,.61,.36,1) both;}.blk.clearing{animation:lineClear .65s ease-in both;pointer-events:none;overflow:hidden;}.blk.dragging{box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:10;position:relative;}.blk{position:relative;margin-bottom:8px;touch-action:pan-y;}.blk:hover .acts{opacity:1!important;}.act{background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);font-family:\'Press Start 2P\',monospace;font-size:6px;padding:5px 7px;cursor:pointer;transition:all .12s;line-height:1;}.act.ok:hover{background:rgba(0,255,100,.25);border-color:rgba(0,255,100,.5);color:#80FF80;}.act.del:hover{background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5);color:#FF8080;}.drop-btn{background:#00F0F0;border:none;color:#001414;font-family:\'Press Start 2P\',monospace;font-size:8px;padding:0 18px;cursor:pointer;letter-spacing:1px;white-space:nowrap;box-shadow:0 4px 0 #007878;transition:transform .1s,box-shadow .1s;}.drop-btn:hover{background:#80F8F8;}.drop-btn:active{transform:translateY(4px);box-shadow:0 0 0 #007878;}.ti{width:100%;border:1px solid;font-family:\'VT323\',monospace;font-size:22px;padding:10px 12px;outline:none;letter-spacing:1px;}.urgent-blink{animation:urgBlink 1.6s ease-in-out infinite;}.tab-panel{animation:fadeIn .18s ease both;}.cert-card{animation:certIn .3s cubic-bezier(.22,.61,.36,1) both;}.fab{position:fixed;bottom:32px;right:50%;transform:translateX(50%);width:56px;height:56px;border-radius:50%;background:#00F0F0;border:none;color:#001414;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(0,240,240,0.4);z-index:90;display:flex;align-items:center;justify-content:center;font-family:monospace;transition:transform .15s;}.fab:active{transform:translateX(50%) scale(0.92);}'}</style>
+      <style>{'@import url(\'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap\');*{box-sizing:border-box;}html,body{background:'+th.bg+';margin:0;padding:0;overscroll-behavior:none;}.page-safe-hdr{padding-top:max(22px,env(safe-area-inset-top,22px))!important;}.sticky-hdr{position:sticky;top:0;top:env(safe-area-inset-top,0);z-index:100;padding-top:max(16px,env(safe-area-inset-top,16px));}@keyframes dropIn{0%{transform:translateY(-130px);opacity:0;}55%{transform:translateY(7px);}75%{transform:translateY(-3px);}100%{transform:translateY(0);opacity:1;}}@keyframes lineClear{0%{transform:scaleY(1);opacity:1;}12%{filter:brightness(5);}40%{transform:scaleY(.55) scaleX(1.04);opacity:.8;filter:brightness(2);}70%{transform:scaleY(.12);opacity:.25;}100%{transform:scaleY(0);opacity:0;margin-bottom:0!important;min-height:0!important;}}@keyframes urgBlink{0%,100%{opacity:.7}50%{opacity:1}}@keyframes coinFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}85%{opacity:.9;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-55px);opacity:0;}}@keyframes certIn{0%{transform:scale(.82);opacity:0;}100%{transform:scale(1);opacity:1;}}@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}.blk.dropping{animation:dropIn .7s cubic-bezier(.22,.61,.36,1) both;}.blk.clearing{animation:lineClear .65s ease-in both;pointer-events:none;overflow:hidden;}.blk.dragging{box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:10;position:relative;}.blk{position:relative;margin-bottom:8px;touch-action:pan-y;}.blk:hover .acts{opacity:1!important;}.act{background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);font-family:\'Press Start 2P\',monospace;font-size:6px;padding:5px 7px;cursor:pointer;transition:all .12s;line-height:1;}.act.ok:hover{background:rgba(0,255,100,.25);border-color:rgba(0,255,100,.5);color:#80FF80;}.act.del:hover{background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5);color:#FF8080;}.drop-btn{background:#00F0F0;border:none;color:#001414;font-family:\'Press Start 2P\',monospace;font-size:8px;padding:0 18px;cursor:pointer;letter-spacing:1px;white-space:nowrap;box-shadow:0 4px 0 #007878;transition:transform .1s,box-shadow .1s;}.drop-btn:hover{background:#80F8F8;}.drop-btn:active{transform:translateY(4px);box-shadow:0 0 0 #007878;}.ti{width:100%;border:1px solid;font-family:\'VT323\',monospace;font-size:22px;padding:10px 12px;outline:none;letter-spacing:1px;}.urgent-blink{animation:urgBlink 1.6s ease-in-out infinite;}.tab-panel{animation:fadeIn .18s ease both;}.cert-card{animation:certIn .3s cubic-bezier(.22,.61,.36,1) both;}.fab{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#00F0F0;border:none;color:#001414;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(0,240,240,0.4);z-index:90;display:flex;align-items:center;justify-content:center;font-family:monospace;transition:transform .15s;}.fab:active{transform:translateX(-50%) scale(0.92);}'}</style>
 
       {floatPts.map(function(fp){return <div key={fp.id} style={{position:'fixed',top:'42%',left:'50%',transform:'translateX(-50%)',zIndex:200,fontFamily:"'Press Start 2P', monospace",fontSize:'11px',color:th.scoreCol,textShadow:th.scoreGlow,animation:'floatUp 1.1s ease-out both',pointerEvents:'none',letterSpacing:'2px'}}>+{fp.pts}</div>;})}
 
@@ -771,7 +801,7 @@ export default function Tetrado(){
       {editProfile&&<ProfileModal user={user} dark={dark} onSave={function(u){saveUser(u);setEditProfile(false);}} onClose={function(){setEditProfile(false);}}/>}
       {showNotif&&<NotifModal notifSettings={notifSettings} onSave={saveNotif} onClose={function(){setShowNotif(false);}} dark={dark}/>}
       {songGame&&hint.musical&&<SongGame hint={hint} dark={dark} onClose={function(){setSongGame(false);}} onAward={function(pts){addAward({type:'song',pts:pts,title:'MUSIC MASTER'});showFloat(pts);setSongGame(false);}}/>}
-      {showAbout&&<AboutPage user={user} dark={dark} score={score} streak={streak} onEditProfile={function(){setShowAbout(false);setEditProfile(true);}} onOpenSettings={function(){setShowAbout(false);setShowSettings(true);}} onClose={function(){setShowAbout(false);}}/>}
+      {showAbout&&<AboutPage user={user} dark={dark} score={score} streak={streak} hasUpdate={hasUpdate} onEditProfile={function(){setShowAbout(false);setEditProfile(true);}} onOpenSettings={function(){setShowAbout(false);setShowSettings(true);}} onClose={function(){setShowAbout(false);}}/>}
       {showSettings&&<SettingsPage notifSettings={notifSettings} onSaveNotif={saveNotif} dark={dark} onToggleDark={function(){setDark(function(d){return !d;});}} onClose={function(){setShowSettings(false);}}/>}
 
       {/* Fixed header */}
@@ -784,8 +814,9 @@ export default function Tetrado(){
               <span>STREAK <span style={{color:th.scoreCol,textShadow:th.scoreGlow}}>{streak}</span></span>
             </div>
           </div>
-          <div style={{cursor:'pointer'}} onClick={function(){setShowAbout(true);}} title="Profile">
+          <div style={{cursor:'pointer',position:'relative'}} onClick={function(){setShowAbout(true);setHasUpdate(false);}} title="Profile">
             <AvatarCanvas grid={user.grid} size={38} style={{border:'2px solid '+th.panelBdr,background:th.inp}}/>
+            {hasUpdate&&<span style={{position:'absolute',top:'-3px',right:'-3px',width:'10px',height:'10px',borderRadius:'50%',background:'#FF3333',border:'2px solid '+th.bg,display:'block'}}/>}
           </div>
         </div>
         {/* Tabs */}
@@ -799,7 +830,7 @@ export default function Tetrado(){
       </div>
 
       {/* Scrollable content */}
-      <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',WebkitOverflowScrolling:'touch'}}>
+      <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',paddingTop:'4px',WebkitOverflowScrolling:'touch'}}>
         {tab==='active'&&<NewTaskPanel
           hint={hint} dark={dark} input={input} dueDate={dueDate} dueSelected={dueSelected} today={TODAY}
           onInput={function(v){setInput(v);setDueSelected(false);setDueDate('');}}
@@ -808,7 +839,7 @@ export default function Tetrado(){
           inputRef={inputEl} th={TH(dark)} panelRef={newTaskPanelRef}
         />}
 
-        <div key={tab} className="tab-panel">
+        <div className="tab-panel">
           {rows.length===0&&<div style={{textAlign:'center',padding:'80px 20px',fontSize:'8px',color:th.accent+'16',lineHeight:3.5,letterSpacing:'2px'}}>{tab==='active'?'BOARD EMPTY':'NO CLEARED LINES'}</div>}
           {rows.map(function(row,ri){
             if(row.kind==='archive-note'){
@@ -837,7 +868,11 @@ export default function Tetrado(){
 
       {/* FAB */}
       {showFab&&tab==='active'&&(
-        <button className="fab" onClick={function(){if(newTaskPanelRef.current){newTaskPanelRef.current.scrollIntoView({behavior:'smooth'});setTimeout(function(){if(inputEl.current)inputEl.current.focus();},400);}}} title="Add new task">+</button>
+        <button className="fab" onClick={function(){
+          var el=scrollContainerRef.current;
+          if(el){el.scrollTo({top:0,behavior:'smooth'});}
+          setTimeout(function(){if(inputEl.current){inputEl.current.focus();inputEl.current.click();}},450);
+        }} title="Add new task">+</button>
       )}
     </div>
   );
