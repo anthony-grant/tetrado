@@ -60,31 +60,175 @@ function safeNotifPermission(){try{if(!('Notification' in window))return'unsuppo
 async function requestNotifPermission(){try{if(!('Notification' in window))return'unsupported';return await Notification.requestPermission();}catch(e){return'denied';}}
 function sendNotification(title,body){try{if(safeNotifPermission()==='granted'){new Notification(title,{body:body,tag:'tetrado-daily'});return true;}}catch(e){return false;}return false;}
 
+// Avatar type registry
+var AVATAR_TYPES=['human','human','human','human','cat','dog','skull','waffle','chip','robot'];
+
 function generateAvatar(seed){
   var rng=seededRand(typeof seed==='string'?hashStr(seed):seed);
-  var skin=SKINS[Math.floor(rng()*SKINS.length)];var hair=HAIRS[Math.floor(rng()*HAIRS.length)];
+  var type=AVATAR_TYPES[Math.floor(rng()*AVATAR_TYPES.length)];
+  var skin=SKINS[Math.floor(rng()*SKINS.length)];
+  var hair=HAIRS[Math.floor(rng()*HAIRS.length)];
   var dk='#0A0A1A',wh='#FEFEFE',lp='#FF4466';
   var G=Array.from({length:24},function(){return Array(24).fill(null);});
   var S=function(r,c,col){if(r>=0&&r<24&&c>=0&&c<24)G[r][c]=col;};
   var bx=function(r1,c1,r2,c2,col){for(var r=r1;r<=r2;r++)for(var c=c1;c<=c2;c++)S(r,c,col);};
-  bx(5,4,20,19,skin);
-  var hs=Math.floor(rng()*4);
-  if(hs===0){bx(0,5,5,18,hair);bx(1,4,5,19,hair);}
-  else if(hs===1){bx(3,4,5,19,hair);for(var c=5;c<=17;c+=4)bx(0,c,3,c+1,hair);}
-  else if(hs===2){for(var r=0;r<6;r++){var sp=Math.round(8-Math.abs(r-2.5));for(var cc=11-sp;cc<=12+sp;cc++)S(r,cc,hair);}bx(5,4,6,19,hair);}
-  else{bx(2,6,5,17,hair);bx(5,3,13,4,hair);bx(5,19,13,20,hair);}
-  bx(12,3,14,3,skin);bx(12,20,14,20,skin);
-  bx(8,6,8,9,dk);bx(8,14,8,17,dk);
-  bx(9,6,11,9,wh);S(10,7,dk);S(10,8,dk);
-  bx(9,14,11,17,wh);S(10,15,dk);S(10,16,dk);
-  if(rng()>0.48){var gc=HAIRS[Math.floor(rng()*HAIRS.length)];for(var rr=8;rr<=12;rr++){S(rr,5,gc);S(rr,10,gc);S(rr,13,gc);S(rr,18,gc);}for(var cv=5;cv<=10;cv++){S(8,cv,gc);S(12,cv,gc);}for(var cw=13;cw<=18;cw++){S(8,cw,gc);S(12,cw,gc);}S(10,11,gc);S(10,12,gc);}
-  S(13,11,skin);S(14,11,skin);S(14,12,skin);
-  var ms=Math.floor(rng()*3);
-  if(ms===0){bx(16,8,16,15,lp);S(15,8,lp);S(15,15,lp);bx(16,9,16,14,wh);bx(17,8,17,15,lp);S(18,9,lp);S(18,14,lp);}
-  else if(ms===1){bx(17,8,17,15,lp);S(16,8,lp);S(16,15,lp);S(18,9,lp);S(18,14,lp);}
-  else{bx(16,7,18,16,lp);bx(16,8,17,15,wh);S(17,11,dk);S(17,12,dk);}
-  if(rng()>0.5){var b='rgba(255,100,100,0.5)';bx(12,5,13,6,b);bx(12,17,13,18,b);}
+
+  if(type==='skull'){
+    var sc='#E8E8E8',sh='#AAAAAA',se='#1A1A1A';
+    bx(4,5,17,18,sc);
+    // eye sockets
+    bx(8,6,11,9,se);bx(8,13,11,16,se);
+    bx(9,7,10,8,wh);bx(9,14,10,15,wh);
+    // nose
+    bx(13,10,14,13,se);S(14,11,se);S(14,12,se);
+    // teeth
+    bx(16,6,18,17,sh);
+    for(var tc=6;tc<=16;tc+=2){bx(16,tc,18,tc,sc);}
+    // cracks
+    S(5,10,sh);S(6,11,sh);S(7,10,sh);
+    if(rng()>0.5){S(5,14,sh);S(6,15,sh);}
+  } else if(type==='cat'){
+    bx(6,4,20,19,skin);
+    // ears
+    bx(1,4,5,7,skin);S(2,5,hair);S(3,5,hair);S(3,6,hair);
+    bx(1,16,5,19,skin);S(2,17,hair);S(3,17,hair);S(3,18,hair);
+    // eyes - cat slits
+    bx(9,6,11,9,wh);bx(9,14,11,17,wh);
+    S(10,7,dk);S(10,8,dk);S(10,15,dk);S(10,16,dk);
+    // nose triangle
+    S(13,11,lp);S(13,12,lp);S(14,11,lp);S(14,12,lp);
+    // whiskers
+    bx(14,1,14,5,dk);bx(14,18,14,22,dk);
+    bx(15,2,15,5,dk);bx(15,18,15,21,dk);
+    // mouth
+    S(16,11,dk);S(16,12,dk);S(17,10,dk);S(17,13,dk);
+    // fur pattern
+    if(rng()>0.5){
+      var fc=HAIRS[Math.floor(rng()*HAIRS.length)];
+      S(7,11,fc);S(7,12,fc);S(8,10,fc);S(8,13,fc);
+    }
+  } else if(type==='dog'){
+    bx(5,4,19,19,skin);
+    // floppy ears
+    bx(3,1,14,5,hair);bx(3,18,14,22,hair);
+    // eyes
+    bx(9,7,11,10,wh);bx(9,13,11,16,wh);
+    bx(10,8,10,9,dk);bx(10,14,10,15,dk);
+    // big nose
+    bx(12,9,14,14,dk);
+    bx(13,10,13,13,wh);
+    // tongue
+    bx(16,10,19,13,lp);S(19,11,lp);S(19,12,lp);
+    // spots
+    if(rng()>0.4){
+      var sp=HAIRS[Math.floor(rng()*HAIRS.length)];
+      bx(7,5,9,7,sp);bx(13,16,15,18,sp);
+    }
+  } else if(type==='waffle'){
+    var wc='#D4940A',wl='#E8B030',wd='#A06808';
+    bx(2,2,21,21,wc);
+    // grid lines
+    for(var wg=5;wg<=20;wg+=4){
+      bx(wg,2,wg,21,wd);bx(2,wg,21,wg,wd);
+    }
+    // raised squares
+    for(var wr=3;wr<=19;wr+=4){
+      for(var wcc=3;wcc<=19;wcc+=4){
+        bx(wr,wcc,wr+2,wcc+2,wl);
+        S(wr,wcc,wc);S(wr,wcc+2,wc);S(wr+2,wcc,wc);S(wr+2,wcc+2,wc);
+      }
+    }
+    // butter pat
+    if(rng()>0.4){
+      bx(8,9,11,14,'#FFF0A0');
+    }
+    // syrup drip
+    if(rng()>0.5){
+      var sy='#7A3500';
+      bx(2,6,4,8,sy);S(4,7,sy);S(5,7,sy);
+    }
+  } else if(type==='chip'){
+    var cc='#D4A843',cl='#F0C060',cs='#A07820';
+    // triangle shape
+    for(var cr=0;cr<24;cr++){
+      var cspan=Math.round((cr/23)*10);
+      for(var ccc=12-cspan;ccc<=11+cspan;ccc++)S(cr,ccc,cc);
+    }
+    // ridges/texture
+    for(var ri=2;ri<22;ri+=3){
+      var rs=Math.round((ri/23)*9);
+      for(var rc2=12-rs;rc2<=11+rs;rc2++){if((ri+rc2)%2===0)S(ri,rc2,cl);}
+    }
+    // salt specs
+    for(var si=0;si<8;si++){
+      var sx=Math.floor(rng()*20)+2,sy2=Math.floor(rng()*20)+2;
+      S(sx,sy2,'#FFFFFF');
+    }
+    // edge shadow
+    for(var er=1;er<23;er++){
+      var esp=Math.round((er/23)*10);
+      S(er,12-esp,cs);S(er,11+esp,cs);
+    }
+  } else if(type==='robot'){
+    var rc='#8090A0',rh='#607080',rl='#A0B8C8',re='#00FFCC';
+    // head
+    bx(3,3,20,20,rc);
+    // antenna
+    bx(0,11,3,12,rh);S(0,11,re);S(0,12,re);
+    // eye screens
+    bx(7,5,11,10,dk);bx(7,13,11,18,dk);
+    bx(8,6,10,9,re);bx(8,14,10,17,re);
+    // scan line
+    S(9,6,wh);S(9,7,wh);S(9,14,wh);S(9,15,wh);
+    // bolts
+    bx(4,4,5,5,rh);bx(4,18,5,19,rh);bx(18,4,19,5,rh);bx(18,18,19,19,rh);
+    // mouth LED bar
+    bx(14,6,15,17,dk);
+    var led=Math.floor(rng()*3);
+    if(led===0){bx(14,7,15,9,re);bx(14,11,15,13,re);bx(14,15,15,16,re);}
+    else if(led===1){for(var li=7;li<=16;li+=2)S(14,li,re);}
+    else{bx(14,7,15,16,re);}
+    // highlight
+    bx(4,4,4,19,rl);bx(4,4,19,4,rl);
+  } else {
+    // human (original)
+    bx(5,4,20,19,skin);
+    var hs=Math.floor(rng()*4);
+    if(hs===0){bx(0,5,5,18,hair);bx(1,4,5,19,hair);}
+    else if(hs===1){bx(3,4,5,19,hair);for(var hc=5;hc<=17;hc+=4)bx(0,hc,3,hc+1,hair);}
+    else if(hs===2){for(var hr=0;hr<6;hr++){var hsp=Math.round(8-Math.abs(hr-2.5));for(var hcc=11-hsp;hcc<=12+hsp;hcc++)S(hr,hcc,hair);}bx(5,4,6,19,hair);}
+    else{bx(2,6,5,17,hair);bx(5,3,13,4,hair);bx(5,19,13,20,hair);}
+    bx(12,3,14,3,skin);bx(12,20,14,20,skin);
+    bx(8,6,8,9,dk);bx(8,14,8,17,dk);
+    bx(9,6,11,9,wh);S(10,7,dk);S(10,8,dk);
+    bx(9,14,11,17,wh);S(10,15,dk);S(10,16,dk);
+    if(rng()>0.48){var gc=HAIRS[Math.floor(rng()*HAIRS.length)];for(var gr=8;gr<=12;gr++){S(gr,5,gc);S(gr,10,gc);S(gr,13,gc);S(gr,18,gc);}for(var gcv=5;gcv<=10;gcv++){S(8,gcv,gc);S(12,gcv,gc);}for(var gcw=13;gcw<=18;gcw++){S(8,gcw,gc);S(12,gcw,gc);}S(10,11,gc);S(10,12,gc);}
+    S(13,11,skin);S(14,11,skin);S(14,12,skin);
+    var ms=Math.floor(rng()*3);
+    if(ms===0){bx(16,8,16,15,lp);S(15,8,lp);S(15,15,lp);bx(16,9,16,14,wh);bx(17,8,17,15,lp);S(18,9,lp);S(18,14,lp);}
+    else if(ms===1){bx(17,8,17,15,lp);S(16,8,lp);S(16,15,lp);S(18,9,lp);S(18,14,lp);}
+    else{bx(16,7,18,16,lp);bx(16,8,17,15,wh);S(17,11,dk);S(17,12,dk);}
+    if(rng()>0.5){var bl='rgba(255,100,100,0.5)';bx(12,5,13,6,bl);bx(12,17,13,18,bl);}
+  }
   return G;
+}
+
+function downloadAvatar(grid,username){
+  var SIZE=1200;var CELL=Math.floor(SIZE/24);var PAD=Math.floor((SIZE-CELL*24)/2);
+  var cv=document.createElement('canvas');cv.width=SIZE;cv.height=SIZE;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#06060F';ctx.fillRect(0,0,SIZE,SIZE);
+  for(var r=0;r<24;r++){for(var c=0;c<24;c++){if(grid[r][c]){ctx.fillStyle=grid[r][c];ctx.fillRect(PAD+c*CELL,PAD+r*CELL,CELL,CELL);}}}
+  // Watermark
+  var fz=Math.round(SIZE*0.028);
+  ctx.font='bold '+fz+'px monospace';
+  ctx.textAlign='right';
+  ctx.fillStyle='rgba(0,240,240,0.55)';
+  ctx.fillText('tetrado.app',SIZE-Math.round(SIZE*0.025),SIZE-Math.round(SIZE*0.025));
+  var link=document.createElement('a');
+  link.download=(username||'avatar')+'-tetrado.png';
+  link.href=cv.toDataURL('image/png');
+  link.click();
 }
 
 function AvatarCanvas({grid,size,style}){
@@ -203,14 +347,14 @@ function NotifModal({notifSettings,onSave,onClose,dark}){
 function CategoryPicker({currentCat,onSelect,onClose,dark}){
   var t=TH(dark);
   return(
-    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.75)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',fontFamily:"'Press Start 2P', monospace"}} onClick={onClose}>
-      <div style={{background:t.bg,border:'2px solid '+t.panelBdr,padding:'18px',maxWidth:'340px',width:'100%'}} onClick={function(e){e.stopPropagation();}}>
+    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:2000,background:'rgba(0,0,0,0.82)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',fontFamily:"'Press Start 2P', monospace"}} onClick={onClose}>
+      <div style={{background:t.bg,border:'2px solid '+t.panelBdr,padding:'18px',maxWidth:'340px',width:'100%',maxHeight:'90vh',overflowY:'auto'}} onClick={function(e){e.stopPropagation();}}>
         <div style={{fontSize:'6px',color:t.accent,letterSpacing:'2px',marginBottom:'14px'}}>SELECT CATEGORY</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:'8px',marginBottom:'12px'}}>
           {CAT_KEYS.map(function(key){var cat=CATEGORIES[key];var on=currentCat===key;return(
             <div key={key} onClick={function(){onSelect(key);onClose();}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',padding:'10px 4px',cursor:'pointer',background:on?cat.col+'22':t.inp,border:'2px solid '+(on?cat.col:t.panelBdr),transition:'all .12s'}}>
               <IconCanvas catKey={key} size={22} dark={dark}/>
-              <span style={{fontSize:'4px',color:on?cat.col:t.muted,letterSpacing:'1px',textAlign:'center',lineHeight:1.5}}>{cat.label}</span>
+              <span style={{fontSize:'4px',color:on?(dark?cat.col:cat.lc):t.muted,letterSpacing:'1px',textAlign:'center',lineHeight:1.5}}>{cat.label}</span>
             </div>
           );})}
         </div>
@@ -260,6 +404,7 @@ function LoginScreen({onLogin}){
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'14px',marginBottom:'30px'}}>
           <div style={{padding:'10px',background:'rgba(0,240,240,0.06)',border:'2px solid rgba(0,240,240,0.22)',cursor:'pointer'}} onClick={regen}><AvatarCanvas grid={grid} size={120}/></div>
           <button onClick={regen} style={{background:'transparent',border:'1px solid rgba(0,240,240,0.3)',color:'rgba(0,240,240,0.65)',fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'8px 14px',cursor:'pointer',letterSpacing:'1px'}}>REROLL AVATAR</button>
+          <button onClick={function(){downloadAvatar(grid,'tetrado');}} style={{background:'transparent',border:'1px solid rgba(0,240,240,0.3)',color:'rgba(0,240,240,0.65)',fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'8px 14px',cursor:'pointer',letterSpacing:'1px'}}>&#11015; SAVE AVATAR</button>
         </div>
         <div style={{marginBottom:'22px'}}>
           <div style={{fontSize:'6px',color:'rgba(0,240,240,0.4)',letterSpacing:'2px',marginBottom:'10px',textAlign:'left'}}>YOUR NAME</div>
@@ -283,7 +428,10 @@ function ProfileModal({user,onSave,onClose,dark}){
         <div style={{fontSize:'8px',color:t.accent,letterSpacing:'2px',marginBottom:'20px'}}>EDIT PROFILE</div>
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'12px',marginBottom:'18px'}}>
           <div style={{padding:'8px',background:t.inp,border:'2px solid '+t.panelBdr,cursor:'pointer'}} onClick={regen}><AvatarCanvas grid={grid} size={88}/></div>
-          <button onClick={regen} style={{background:'transparent',border:'1px solid '+t.panelBdr,color:t.accent,fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'7px 12px',cursor:'pointer'}}>REROLL</button>
+          <div style={{display:'flex',gap:'8px'}}>
+            <button onClick={regen} style={{background:'transparent',border:'1px solid '+t.panelBdr,color:t.accent,fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'7px 12px',cursor:'pointer'}}>REROLL</button>
+            <button onClick={function(){downloadAvatar(grid,name||'tetrado');}} style={{background:'transparent',border:'1px solid '+t.panelBdr,color:t.accent,fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'7px 12px',cursor:'pointer'}}>&#11015; SAVE</button>
+          </div>
         </div>
         <input value={name} onChange={function(e){setName(e.target.value.slice(0,16));}} onKeyDown={function(e){if(e.key==='Enter')save();}} style={{width:'100%',background:t.inp,border:'1px solid '+t.inpBdr,color:t.inpFg,fontFamily:"'VT323', monospace",fontSize:'22px',padding:'9px 12px',outline:'none',caretColor:t.accent,textAlign:'center',letterSpacing:'2px',marginBottom:'14px'}}/>
         <div style={{display:'flex',gap:'8px'}}>
@@ -841,7 +989,7 @@ export default function Tetrado(){
       </div>
 
       {/* Scrollable content */}
-      <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',paddingTop:'4px',WebkitOverflowScrolling:'touch'}}>
+      <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',paddingTop:'14px',WebkitOverflowScrolling:'touch'}}>
         {tab==='active'&&<NewTaskPanel
           hint={hint} dark={dark} input={input} dueDate={dueDate} dueSelected={dueSelected} today={TODAY}
           onInput={function(v){setInput(v);setDueSelected(false);setDueDate('');}}
