@@ -522,6 +522,37 @@ function AboutPage({user,dark,score,streak,hasUpdate,onEditProfile,onOpenSetting
         );})}
       </div>
 
+      {/* Install instructions */}
+      <div style={{padding:'20px 22px',borderBottom:'1px solid '+t.sep,flexShrink:0}}>
+        <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'14px'}}>INSTALL ON YOUR DEVICE</div>
+        <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+          {/* iOS */}
+          <div style={{background:t.inp,border:'1px solid '+t.panelBdr,padding:'14px'}}>
+            <div style={{fontSize:'6px',color:t.accent,letterSpacing:'2px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              iOS — SAFARI
+            </div>
+            <div style={{fontFamily:"'VT323', monospace",fontSize:'16px',color:t.fg,lineHeight:1.8,letterSpacing:'1px'}}>
+              1. Tap the <span style={{color:t.accent}}>Share</span> button at the bottom of Safari<br/>
+              2. Scroll down and tap <span style={{color:t.accent}}>Add to Home Screen</span><br/>
+              3. Tap <span style={{color:t.accent}}>Add</span> — done!
+            </div>
+          </div>
+          {/* Android */}
+          <div style={{background:t.inp,border:'1px solid '+t.panelBdr,padding:'14px'}}>
+            <div style={{fontSize:'6px',color:t.accent,letterSpacing:'2px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341l-.527-1.33c.914-.37 1.644-.997 2.108-1.808H6.896c.464.811 1.194 1.438 2.108 1.808l-.527 1.33A8.003 8.003 0 0 1 4 8h16a8.003 8.003 0 0 1-2.477 7.341zM8.5 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm7 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              ANDROID — CHROME
+            </div>
+            <div style={{fontFamily:"'VT323', monospace",fontSize:'16px',color:t.fg,lineHeight:1.8,letterSpacing:'1px'}}>
+              1. Tap the <span style={{color:t.accent}}>⋮ menu</span> in Chrome<br/>
+              2. Tap <span style={{color:t.accent}}>Add to Home Screen</span><br/>
+              3. Tap <span style={{color:t.accent}}>Add</span> — done!
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style={{flex:1}}/>
 
       <div style={{padding:'28px 22px 36px',borderTop:'1px solid '+t.sep,flexShrink:0}}>
