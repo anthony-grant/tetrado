@@ -711,8 +711,7 @@ function NewTaskPanel({hint,dark,input,dueDate,dueSelected,today,onInput,onSelec
   var quickOpts=[{label:'TODAY',val:today},{label:'TOMORROW',val:tomorrow},{label:'NO DATE',val:''}];
   var isCustom=dueSelected&&dueDate&&dueDate!==today&&dueDate!==tomorrow;
   return(
-    <div ref={panelRef} style={{margin:'18px 0'}}>
-      <div style={{fontSize:'7px',letterSpacing:'2px',padding:'18px 0 10px',marginBottom:'10px',borderBottom:'1px solid '+th.sep,color:th.lblToday}}>NEW TASK</div>
+    <div ref={panelRef} style={{marginBottom:'18px'}}>
       <div style={{background:th.panel,border:'2px solid '+th.panelBdr,padding:'14px'}}>
         <div style={{position:'relative',display:'flex',gap:'0',marginBottom:'12px'}}>
           <input ref={inputRef} className="ti" placeholder={hint.text} value={input}
@@ -1063,6 +1062,7 @@ export default function Tetrado(){
 
       {/* Scrollable content */}
       <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',paddingTop:'14px',WebkitOverflowScrolling:'touch'}}>
+        {tab==='active'&&<div style={{fontSize:'7px',letterSpacing:'2px',padding:'10px 0 10px',marginBottom:'10px',borderBottom:'1px solid '+th.sep,color:th.lblToday}}>NEW TASK</div>}
         {tab==='active'&&<NewTaskPanel
           hint={hint} dark={dark} input={input} dueDate={dueDate} dueSelected={dueSelected} today={TODAY}
           onInput={function(v){setInput(v);setDueSelected(false);setDueDate('');}}
