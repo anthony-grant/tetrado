@@ -444,10 +444,18 @@ function ProfileModal({user,onSave,onClose,dark}){
 }
 
 // Settings page
-function SettingsPage({notifSettings,onSaveNotif,dark,onToggleDark,onClose}){
+function SettingsPage({notifSettings,onSaveNotif,dark,onToggleDark,calendarSettings,onSaveCalendar,onClose}){
   var t=TH(dark);
   var [showNotifSub,setShowNotifSub]=useState(false);
+  var [calEnabled,setCalEnabled]=useState(calendarSettings.enabled);
+  var [calProvider,setCalProvider]=useState(calendarSettings.provider||'google');
+  var [calToast,setCalToast]=useState(false);
   var notifOn=notifSettings.enabled&&safeNotifPermission()==='granted';
+  function saveCalSetting(){
+    onSaveCalendar({enabled:calEnabled,provider:calProvider});
+    setCalToast(true);
+    setTimeout(function(){setCalToast(false);},2000);
+  }
   return(
     <div style={{position:'fixed',inset:0,zIndex:500,background:t.bg,overflowY:'auto',fontFamily:"'Press Start 2P', monospace",display:'flex',flexDirection:'column'}}>
       {showNotifSub&&<NotifModal notifSettings={notifSettings} onSave={onSaveNotif} onClose={function(){setShowNotifSub(false);}} dark={dark}/>}
@@ -475,6 +483,40 @@ function SettingsPage({notifSettings,onSaveNotif,dark,onToggleDark,onClose}){
           <span>DAILY REMINDER</span>
           <span style={{fontSize:'9px',color:notifOn?'#00C850':t.muted}}>{notifOn?'ON ●':'OFF ○'}</span>
         </button>
+      </div>
+
+      {/* Calendar */}
+      <div style={{padding:'22px 22px 18px',borderBottom:'1px solid '+t.sep}}>
+        <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'14px'}}>CALENDAR</div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:calEnabled?'16px':'0'}}>
+          <div style={{fontFamily:"'VT323', monospace",fontSize:'18px',color:t.fg,letterSpacing:'1px',lineHeight:1.3}}>Long-press adds to calendar</div>
+          <div style={{display:'flex',gap:'6px',flexShrink:0,marginLeft:'12px'}}>
+            {[{label:'ON',val:true,col:'#00C850'},{label:'OFF',val:false}].map(function(opt){
+              var on=calEnabled===opt.val;
+              return <button key={opt.label} onClick={function(){setCalEnabled(opt.val);}} style={{fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'8px 10px',cursor:'pointer',border:'2px solid '+(on?(opt.col||t.accent):t.panelBdr),background:on?(opt.col||t.accent)+'22':t.inp,color:on?(opt.col||t.accent):t.muted,letterSpacing:'1px'}}>{opt.label}</button>;
+            })}
+          </div>
+        </div>
+        {calEnabled&&(
+          <div style={{animation:'fadeIn .15s ease both'}}>
+            <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'10px'}}>OPEN IN</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'14px'}}>
+              {[{val:'google',label:'Google Calendar',icon:'🗓'},{val:'apple',label:'Apple Calendar (.ics)',icon:'🍎'}].map(function(opt){
+                var on=calProvider===opt.val;
+                return(
+                  <button key={opt.val} onClick={function(){setCalProvider(opt.val);}} style={{display:'flex',alignItems:'center',gap:'12px',background:on?t.tabOnBg:t.inp,border:'2px solid '+(on?t.accent:t.panelBdr),padding:'12px 14px',cursor:'pointer',width:'100%',textAlign:'left'}}>
+                    <span style={{fontSize:'16px'}}>{opt.icon}</span>
+                    <span style={{fontFamily:"'Press Start 2P', monospace",fontSize:'6px',color:on?t.accent:t.muted,letterSpacing:'1px'}}>{opt.label}</span>
+                    <span style={{marginLeft:'auto',flexShrink:0,width:'12px',height:'12px',borderRadius:'50%',border:'2px solid '+(on?t.accent:t.muted),background:on?t.accent:'transparent',display:'block'}}/>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={saveCalSetting} style={{width:'100%',background:calToast?'#00C850':t.accent,border:'none',color:dark?'#001414':'#fff',fontFamily:"'Press Start 2P', monospace",fontSize:'7px',padding:'12px',cursor:'pointer',letterSpacing:'1px',transition:'background .2s'}}>
+              {calToast?'SAVED ✓':'SAVE'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{flex:1}}/>
@@ -614,11 +656,12 @@ function AboutPage({user,dark,score,streak,hasUpdate,onEditProfile,onOpenSetting
 }
 
 // Task block with swipe, drag handle, and inline edit
-function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCategoryChange,onDragStart,isDragging,editingId,onEditSave,onEditCancel}){
+function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCategoryChange,onDragStart,isDragging,editingId,onEditSave,onEditCancel,calendarEnabled,onLongPress}){
   var [showPicker,setShowPicker]=useState(false);
-  var [swipeX,setSwipeX]=useState(0); // px translation
+  var [swipeX,setSwipeX]=useState(0);
   var [swiping,setSwiping]=useState(false);
   var swipeRef=useRef(null);
+  var longPressRef=useRef(null);
   var isEditing=editingId===t.id;
   var [editText,setEditText]=useState(t.text);
   var [editDue,setEditDue]=useState(t.due||'');
@@ -633,17 +676,25 @@ function TaskBlock({t,dropping,isClearing,today,dark,onComplete,onRemove,onCateg
     if(t.done)return;
     swipeRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY,moved:false};
     setSwiping(false);
+    if(calendarEnabled){
+      longPressRef.current=setTimeout(function(){
+        longPressRef.current=null;
+        if(swipeRef.current&&!swipeRef.current.moved)onLongPress();
+      },600);
+    }
   }
   function onTouchMove(e){
     if(!swipeRef.current||t.done)return;
     var dx=e.touches[0].clientX-swipeRef.current.x;
     var dy=e.touches[0].clientY-swipeRef.current.y;
-    if(!swipeRef.current.moved&&Math.abs(dy)>Math.abs(dx))return; // vertical scroll wins
+    if(!swipeRef.current.moved&&Math.abs(dy)>Math.abs(dx))return;
     swipeRef.current.moved=true;
+    if(longPressRef.current){clearTimeout(longPressRef.current);longPressRef.current=null;}
     var clamped=Math.max(-SWIPE_THRESHOLD*1.3,Math.min(SWIPE_THRESHOLD*1.3,dx));
     setSwipeX(clamped);setSwiping(true);
   }
   function onTouchEnd(){
+    if(longPressRef.current){clearTimeout(longPressRef.current);longPressRef.current=null;}
     if(!swipeRef.current||t.done){swipeRef.current=null;setSwipeX(0);setSwiping(false);return;}
     if(swipeX<=-SWIPE_THRESHOLD){onComplete();}
     else if(swipeX>=SWIPE_THRESHOLD&&!isEditing){setEditText(t.text);setEditDue(t.due||today);onEditSave(t.id,'__open__',t.due);}
@@ -760,6 +811,7 @@ export default function Tetrado(){
   var [showNotif,setShowNotif]=useState(false);
   var [showSettings,setShowSettings]=useState(false);
   var [notifSettings,setNotifSettings]=useState({enabled:false,time:'09:00',lastFiredDate:null});
+  var [calendarSettings,setCalendarSettings]=useState({enabled:false,provider:'google'});
   var [floatPts,setFloatPts]=useState([]);
   var [hint]=useState(function(){return pickHint();});
   var [songGame,setSongGame]=useState(false);
@@ -908,6 +960,7 @@ export default function Tetrado(){
         }
       }catch(e){void e;}
       try{var r3=await storage.get('tetrado-notif');if(r3&&r3.value){var ns=JSON.parse(r3.value);setNotifSettings(ns);checkAndFireNotif(ns);}}catch(e){void e;}
+      try{var r4=await storage.get('tetrado-cal');if(r4&&r4.value)setCalendarSettings(JSON.parse(r4.value));}catch(e){void e;}
       setLoaded(true);
     })();
   },[]);
@@ -920,6 +973,13 @@ export default function Tetrado(){
 
   var saveUser=useCallback(async function(u){setUser(u);await storage.set('tetrado-user',JSON.stringify(u)).catch(function(e){return e;});},[]);
   var saveNotif=useCallback(async function(ns){setNotifSettings(ns);await storage.set('tetrado-notif',JSON.stringify(ns)).catch(function(e){return e;});},[]);
+  var saveCalendar=useCallback(async function(cs){setCalendarSettings(cs);await storage.set('tetrado-cal',JSON.stringify(cs)).catch(function(e){return e;});},[]);
+
+  var [toast,setToast]=useState(null);
+  var showToast=useCallback(function(msg){
+    setToast(msg);
+    setTimeout(function(){setToast(null);},2200);
+  },[]);
 
   var showFloat=useCallback(function(pts){
     var id=Date.now()+Math.random();
@@ -947,6 +1007,28 @@ export default function Tetrado(){
     if(thresh){gameRef.current.dailyBonusClaimed[TODAY]=dbc.concat([thresh.count]);setTimeout(function(){addAward({type:'daily',pts:thresh.pts,count:thresh.count,date:TODAY});},800);}
     setClearing(function(p){var n=new Set(p);n.add(id);return n;});
     setTimeout(function(){setTasks(function(p){return p.map(function(t){return t.id===id?Object.assign({},t,{done:true}):t;});});setClearing(function(p){var n=new Set(p);n.delete(id);return n;});setTab('active');},650);
+  }
+
+  function addToCalendar(task){
+    var title=encodeURIComponent(task.text);
+    var due=task.due||TODAY;
+    var d=new Date(due+'T09:00:00');
+    var pad=function(n){return String(n).padStart(2,'0');};
+    var ymd=d.getFullYear()+''+pad(d.getMonth()+1)+''+pad(d.getDate());
+    var nextD=new Date(d);nextD.setDate(nextD.getDate()+1);
+    var ymdNext=nextD.getFullYear()+''+pad(nextD.getMonth()+1)+''+pad(nextD.getDate());
+    if(calendarSettings.provider==='google'){
+      var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+ymd+'/'+ymdNext;
+      window.open(url,'_blank');
+    } else {
+      var ics='BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:'+task.text+'\nDTSTART;VALUE=DATE:'+ymd+'\nDTEND;VALUE=DATE:'+ymdNext+'\nEND:VEVENT\nEND:VCALENDAR';
+      var blob=new Blob([ics],{type:'text/calendar'});
+      var link=document.createElement('a');
+      link.href=URL.createObjectURL(blob);
+      link.download='tetrado-task.ics';
+      link.click();
+    }
+    showToast('Added to '+( calendarSettings.provider==='google'?'Google Calendar':'Apple Calendar'));
   }
 
   function removeTask(id){setTasks(function(p){return p.filter(function(t){return t.id!==id;});});}
@@ -1027,13 +1109,14 @@ export default function Tetrado(){
       <style>{'@import url(\'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap\');*{box-sizing:border-box;}html,body{margin:0;padding:0;overscroll-behavior:none;}.page-safe-hdr{padding-top:max(22px,env(safe-area-inset-top,22px))!important;}.sticky-hdr{position:sticky;top:0;top:env(safe-area-inset-top,0);z-index:100;padding-top:max(16px,env(safe-area-inset-top,16px));}@keyframes dropIn{0%{transform:translateY(-130px);opacity:0;}55%{transform:translateY(7px);}75%{transform:translateY(-3px);}100%{transform:translateY(0);opacity:1;}}@keyframes lineClear{0%{transform:scaleY(1);opacity:1;}12%{filter:brightness(5);}40%{transform:scaleY(.55) scaleX(1.04);opacity:.8;filter:brightness(2);}70%{transform:scaleY(.12);opacity:.25;}100%{transform:scaleY(0);opacity:0;margin-bottom:0!important;min-height:0!important;}}@keyframes urgBlink{0%,100%{opacity:.7}50%{opacity:1}}@keyframes coinFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}85%{opacity:.9;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-55px);opacity:0;}}@keyframes certIn{0%{transform:scale(.82);opacity:0;}100%{transform:scale(1);opacity:1;}}@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}.blk.dropping{animation:dropIn .7s cubic-bezier(.22,.61,.36,1) both;}.blk.clearing{animation:lineClear .65s ease-in both;pointer-events:none;overflow:hidden;}.blk.dragging{box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:10;position:relative;}.blk{position:relative;margin-bottom:8px;touch-action:pan-y;}.blk:hover .acts{opacity:1!important;}.act{background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);font-family:\'Press Start 2P\',monospace;font-size:6px;padding:5px 7px;cursor:pointer;transition:all .12s;line-height:1;}.act.ok:hover{background:rgba(0,255,100,.25);border-color:rgba(0,255,100,.5);color:#80FF80;}.act.del:hover{background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5);color:#FF8080;}.drop-btn{background:#00F0F0;border:none;color:#001414;font-family:\'Press Start 2P\',monospace;font-size:8px;padding:0 18px;cursor:pointer;letter-spacing:1px;white-space:nowrap;box-shadow:0 4px 0 #007878;transition:transform .1s,box-shadow .1s;}.drop-btn:hover{background:#80F8F8;}.drop-btn:active{transform:translateY(4px);box-shadow:0 0 0 #007878;}.ti{width:100%;border:1px solid;font-family:\'VT323\',monospace;font-size:22px;padding:10px 12px;outline:none;letter-spacing:1px;}.urgent-blink{animation:urgBlink 1.6s ease-in-out infinite;}.tab-panel{animation:fadeIn .18s ease both;}.cert-card{animation:certIn .3s cubic-bezier(.22,.61,.36,1) both;}.fab{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#00F0F0;border:none;color:#001414;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(0,240,240,0.4);z-index:90;display:flex;align-items:center;justify-content:center;font-family:monospace;transition:transform .15s;}.fab:active{transform:translateX(-50%) scale(0.92);}'}</style>
 
       {floatPts.map(function(fp){return <div key={fp.id} style={{position:'fixed',top:'42%',left:'50%',transform:'translateX(-50%)',zIndex:200,fontFamily:"'Press Start 2P', monospace",fontSize:'11px',color:th.scoreCol,textShadow:th.scoreGlow,animation:'floatUp 1.1s ease-out both',pointerEvents:'none',letterSpacing:'2px'}}>+{fp.pts}</div>;})}
+      {toast&&<div style={{position:'fixed',bottom:'90px',left:'50%',transform:'translateX(-50%)',zIndex:300,background:dark?'rgba(0,240,240,0.92)':'rgba(0,100,100,0.92)',color:dark?'#001414':'#fff',fontFamily:"'Press Start 2P', monospace",fontSize:'7px',padding:'12px 18px',letterSpacing:'1px',pointerEvents:'none',whiteSpace:'nowrap',animation:'fadeIn .18s ease both',boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>{toast}</div>}
 
       {awards.length>0&&<Certificate award={awards[0]} user={user} onDismiss={function(){setAwards(function(p){return p.slice(1);});}}/>}
       {editProfile&&<ProfileModal user={user} dark={dark} onSave={function(u){saveUser(u);setEditProfile(false);}} onClose={function(){setEditProfile(false);}}/>}
       {showNotif&&<NotifModal notifSettings={notifSettings} onSave={saveNotif} onClose={function(){setShowNotif(false);}} dark={dark}/>}
       {songGame&&hint.musical&&<SongGame hint={hint} dark={dark} onClose={function(){setSongGame(false);}} onAward={function(pts){addAward({type:'song',pts:pts,title:'MUSIC MASTER'});showFloat(pts);setSongGame(false);}}/>}
       {showAbout&&<AboutPage user={user} dark={dark} score={score} streak={streak} hasUpdate={hasUpdate} onEditProfile={function(){setShowAbout(false);setEditProfile(true);}} onOpenSettings={function(){setShowAbout(false);setShowSettings(true);}} onClose={function(){setShowAbout(false);}}/>}
-      {showSettings&&<SettingsPage notifSettings={notifSettings} onSaveNotif={saveNotif} dark={dark} onToggleDark={function(){setDark(function(d){return !d;});}} onClose={function(){setShowSettings(false);}}/>}
+      {showSettings&&<SettingsPage notifSettings={notifSettings} onSaveNotif={saveNotif} dark={dark} onToggleDark={function(){setDark(function(d){return !d;});}} calendarSettings={calendarSettings} onSaveCalendar={saveCalendar} onClose={function(){setShowSettings(false);}}/>}
 
       {/* Fixed header */}
       <div className="sticky-hdr" style={{background:th.bg,paddingLeft:'22px',paddingRight:'22px',paddingBottom:'0',borderBottom:'2px solid '+th.hdrBdr,flexShrink:0}}>
@@ -1093,8 +1176,8 @@ export default function Tetrado(){
             return <TaskBlock key={t2.id} t={t2} dropping={dropping===t2.id} isClearing={clearing.has(t2.id)} today={TODAY} dark={dark}
               onComplete={function(){completeTask(t2.id,t2.text,t2.due);}} onRemove={function(){removeTask(t2.id);}} onCategoryChange={function(key){updateCategory(t2.id,key);}}
               onDragStart={function(id,y){startDrag(id,y);}} isDragging={draggingId===t2.id}
-              editingId={editingId} onEditSave={handleEditSave} onEditCancel={function(){setEditingId(null);}}/>;
-          })}
+              editingId={editingId} onEditSave={handleEditSave} onEditCancel={function(){setEditingId(null);}}
+              calendarEnabled={calendarSettings.enabled} onLongPress={function(){addToCalendar(t2);}}/>;          })}
         </div>
       </div>
 
