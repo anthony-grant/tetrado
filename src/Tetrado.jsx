@@ -482,17 +482,90 @@ function SettingsPage({notifSettings,onSaveNotif,dark,onToggleDark,onClose}){
   );
 }
 
+function InstallPage({dark,onClose}){
+  var t=TH(dark);
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:510,background:t.bg,overflowY:'auto',fontFamily:"'Press Start 2P', monospace",display:'flex',flexDirection:'column'}}>
+      <div className="page-safe-hdr" style={{padding:'0 22px 16px',borderBottom:'2px solid '+t.hdrBdr,flexShrink:0,display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
+        <div style={{fontSize:'8px',color:t.accent,letterSpacing:'3px'}}>INSTALL</div>
+        <button onClick={onClose} style={{background:'transparent',border:'1px solid '+t.panelBdr,color:t.muted,fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'8px 12px',cursor:'pointer'}}>CLOSE</button>
+      </div>
+
+      <div style={{padding:'28px 22px',flex:1}}>
+        <div style={{fontFamily:"'VT323', monospace",fontSize:'20px',color:t.accent,letterSpacing:'2px',marginBottom:'24px',lineHeight:1.6}}>
+          Add Tetrado to your home screen for the full app experience — no app store needed.
+        </div>
+
+        {/* iOS */}
+        <div style={{marginBottom:'20px'}}>
+          <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'12px',display:'flex',alignItems:'center',gap:'8px'}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            iPHONE — SAFARI
+          </div>
+          <div style={{background:t.panel,border:'2px solid '+t.panelBdr,padding:'18px',display:'flex',flexDirection:'column',gap:'14px'}}>
+            {[
+              {n:'1',text:'Open tetrado.app in Safari'},
+              {n:'2',text:'Tap the Share button',sub:'The box with an arrow pointing up, at the bottom of the screen'},
+              {n:'3',text:'Scroll down and tap "Add to Home Screen"'},
+              {n:'4',text:'Tap "Add" in the top right'},
+            ].map(function(step){return(
+              <div key={step.n} style={{display:'flex',gap:'14px',alignItems:'flex-start'}}>
+                <div style={{flexShrink:0,width:'24px',height:'24px',background:t.accent,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',color:dark?'#001414':'#fff',fontFamily:"'Press Start 2P', monospace"}}>{step.n}</div>
+                <div>
+                  <div style={{fontFamily:"'VT323', monospace",fontSize:'20px',color:t.fg,letterSpacing:'1px',lineHeight:1.3}}>{step.text}</div>
+                  {step.sub&&<div style={{fontFamily:"'VT323', monospace",fontSize:'15px',color:t.muted,letterSpacing:'1px',marginTop:'3px'}}>{step.sub}</div>}
+                </div>
+              </div>
+            );})}
+          </div>
+        </div>
+
+        {/* Android */}
+        <div style={{marginBottom:'20px'}}>
+          <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'12px',display:'flex',alignItems:'center',gap:'8px'}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0 0 12 1.5c-.96 0-1.86.23-2.66.63L7.85.65c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 0 0 6 7h12a5.983 5.983 0 0 0-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
+            ANDROID — CHROME
+          </div>
+          <div style={{background:t.panel,border:'2px solid '+t.panelBdr,padding:'18px',display:'flex',flexDirection:'column',gap:'14px'}}>
+            {[
+              {n:'1',text:'Open tetrado.app in Chrome'},
+              {n:'2',text:'Tap the ⋮ menu',sub:'Three dots in the top right corner of Chrome'},
+              {n:'3',text:'Tap "Add to Home Screen"'},
+              {n:'4',text:'Tap "Add" to confirm'},
+            ].map(function(step){return(
+              <div key={step.n} style={{display:'flex',gap:'14px',alignItems:'flex-start'}}>
+                <div style={{flexShrink:0,width:'24px',height:'24px',background:t.accent,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',color:dark?'#001414':'#fff',fontFamily:"'Press Start 2P', monospace"}}>{step.n}</div>
+                <div>
+                  <div style={{fontFamily:"'VT323', monospace",fontSize:'20px',color:t.fg,letterSpacing:'1px',lineHeight:1.3}}>{step.text}</div>
+                  {step.sub&&<div style={{fontFamily:"'VT323', monospace",fontSize:'15px',color:t.muted,letterSpacing:'1px',marginTop:'3px'}}>{step.sub}</div>}
+                </div>
+              </div>
+            );})}
+          </div>
+        </div>
+
+        <div style={{fontFamily:"'VT323', monospace",fontSize:'16px',color:t.muted,textAlign:'center',lineHeight:1.8,padding:'12px 0'}}>
+          Once installed, Tetrado runs fullscreen with no browser chrome — just the game.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // About / Profile page — nav hub
 function AboutPage({user,dark,score,streak,hasUpdate,onEditProfile,onOpenSettings,onClose}){
   var t=TH(dark);
   var name=user?user.username:'PLAYER';
+  var [showInstall,setShowInstall]=useState(false);
   var navRows=[
     {label:'EDIT PROFILE',icon:'◈',action:onEditProfile},
     {label:'SETTINGS',icon:'⚙',action:onOpenSettings},
+    {label:'ADD TO HOME SCREEN',icon:'⊕',action:function(){setShowInstall(true);}},
   ];
   if(hasUpdate){navRows.push({label:'UPDATE TETRADO',icon:'●',action:function(){window.location.reload();},update:true});}
   return(
     <div style={{position:'fixed',inset:0,zIndex:500,background:t.bg,overflowY:'auto',fontFamily:"'Press Start 2P', monospace",display:'flex',flexDirection:'column'}}>
+      {showInstall&&<InstallPage dark={dark} onClose={function(){setShowInstall(false);}}/>}
       <div className="page-safe-hdr" style={{padding:'0 22px 16px',borderBottom:'2px solid '+t.hdrBdr,flexShrink:0,display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
         <div style={{fontSize:'8px',color:t.accent,letterSpacing:'3px'}}>PROFILE</div>
         <button onClick={onClose} style={{background:'transparent',border:'1px solid '+t.panelBdr,color:t.muted,fontFamily:"'Press Start 2P', monospace",fontSize:'6px',padding:'8px 12px',cursor:'pointer',letterSpacing:'1px'}}>CLOSE</button>
@@ -520,37 +593,6 @@ function AboutPage({user,dark,score,streak,hasUpdate,onEditProfile,onOpenSetting
             <span style={{color:row.update?'#FF4444':t.muted,fontSize:'10px'}}>›</span>
           </button>
         );})}
-      </div>
-
-      {/* Install instructions */}
-      <div style={{padding:'20px 22px',borderBottom:'1px solid '+t.sep,flexShrink:0}}>
-        <div style={{fontSize:'6px',color:t.muted,letterSpacing:'2px',marginBottom:'14px'}}>INSTALL ON YOUR DEVICE</div>
-        <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-          {/* iOS */}
-          <div style={{background:t.inp,border:'1px solid '+t.panelBdr,padding:'14px'}}>
-            <div style={{fontSize:'6px',color:t.accent,letterSpacing:'2px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              iOS — SAFARI
-            </div>
-            <div style={{fontFamily:"'VT323', monospace",fontSize:'16px',color:t.fg,lineHeight:1.8,letterSpacing:'1px'}}>
-              1. Tap the <span style={{color:t.accent}}>Share</span> button at the bottom of Safari<br/>
-              2. Scroll down and tap <span style={{color:t.accent}}>Add to Home Screen</span><br/>
-              3. Tap <span style={{color:t.accent}}>Add</span> — done!
-            </div>
-          </div>
-          {/* Android */}
-          <div style={{background:t.inp,border:'1px solid '+t.panelBdr,padding:'14px'}}>
-            <div style={{fontSize:'6px',color:t.accent,letterSpacing:'2px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341l-.527-1.33c.914-.37 1.644-.997 2.108-1.808H6.896c.464.811 1.194 1.438 2.108 1.808l-.527 1.33A8.003 8.003 0 0 1 4 8h16a8.003 8.003 0 0 1-2.477 7.341zM8.5 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm7 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
-              ANDROID — CHROME
-            </div>
-            <div style={{fontFamily:"'VT323', monospace",fontSize:'16px',color:t.fg,lineHeight:1.8,letterSpacing:'1px'}}>
-              1. Tap the <span style={{color:t.accent}}>⋮ menu</span> in Chrome<br/>
-              2. Tap <span style={{color:t.accent}}>Add to Home Screen</span><br/>
-              3. Tap <span style={{color:t.accent}}>Add</span> — done!
-            </div>
-          </div>
-        </div>
       </div>
 
       <div style={{flex:1}}/>
