@@ -544,7 +544,7 @@ export default function Tetrado(){
   // Drag state
   var [draggingId,setDraggingId]=useState(null);
   var [orderedActiveIds,setOrderedActiveIds]=useState([]);
-  var dragInfoRef=useRef(null);
+  var scrollContainerRef=useRef(null);
   var colorRef=useRef(0);
   var inputEl=useRef(null);
   var newTaskPanelRef=useRef(null);
@@ -567,8 +567,8 @@ export default function Tetrado(){
       var rect=newTaskPanelRef.current.getBoundingClientRect();
       setShowFab(rect.bottom<0&&tab==='active');
     }
-    window.addEventListener('scroll',onScroll,{passive:true});
-    return function(){window.removeEventListener('scroll',onScroll);};
+    var el=scrollContainerRef.current;
+    if(el){el.addEventListener('scroll',onScroll,{passive:true});return function(){el.removeEventListener('scroll',onScroll);};}
   },[tab]);
 
   // Global drag move/end
@@ -762,7 +762,7 @@ export default function Tetrado(){
   if(!user)return <LoginScreen onLogin={saveUser}/>;
 
   return(
-    <div style={{fontFamily:"'Press Start 2P', monospace",background:th.bg,minHeight:'100vh',backgroundImage:'linear-gradient('+th.grid+' 1px,transparent 1px),linear-gradient(90deg,'+th.grid+' 1px,transparent 1px)',backgroundSize:'28px 28px',maxWidth:'560px',margin:'0 auto',position:'relative'}}>
+    <div style={{fontFamily:"'Press Start 2P', monospace",background:th.bg,minHeight:'100vh',backgroundImage:'linear-gradient('+th.grid+' 1px,transparent 1px),linear-gradient(90deg,'+th.grid+' 1px,transparent 1px)',backgroundSize:'28px 28px',maxWidth:'560px',margin:'0 auto',display:'flex',flexDirection:'column',height:'100dvh',overflow:'hidden',position:'relative'}}>
       <style>{'@import url(\'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap\');*{box-sizing:border-box;}.page-safe-hdr{padding-top:max(22px,env(safe-area-inset-top,22px))!important;}.sticky-hdr{position:sticky;top:0;top:env(safe-area-inset-top,0);z-index:100;padding-top:max(16px,env(safe-area-inset-top,16px));}@keyframes dropIn{0%{transform:translateY(-130px);opacity:0;}55%{transform:translateY(7px);}75%{transform:translateY(-3px);}100%{transform:translateY(0);opacity:1;}}@keyframes lineClear{0%{transform:scaleY(1);opacity:1;}12%{filter:brightness(5);}40%{transform:scaleY(.55) scaleX(1.04);opacity:.8;filter:brightness(2);}70%{transform:scaleY(.12);opacity:.25;}100%{transform:scaleY(0);opacity:0;margin-bottom:0!important;min-height:0!important;}}@keyframes urgBlink{0%,100%{opacity:.7}50%{opacity:1}}@keyframes coinFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}85%{opacity:.9;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-55px);opacity:0;}}@keyframes certIn{0%{transform:scale(.82);opacity:0;}100%{transform:scale(1);opacity:1;}}@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}.blk.dropping{animation:dropIn .7s cubic-bezier(.22,.61,.36,1) both;}.blk.clearing{animation:lineClear .65s ease-in both;pointer-events:none;overflow:hidden;}.blk.dragging{box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:10;position:relative;}.blk{position:relative;margin-bottom:8px;touch-action:pan-y;}.blk:hover .acts{opacity:1!important;}.act{background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.55);font-family:\'Press Start 2P\',monospace;font-size:6px;padding:5px 7px;cursor:pointer;transition:all .12s;line-height:1;}.act.ok:hover{background:rgba(0,255,100,.25);border-color:rgba(0,255,100,.5);color:#80FF80;}.act.del:hover{background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5);color:#FF8080;}.drop-btn{background:#00F0F0;border:none;color:#001414;font-family:\'Press Start 2P\',monospace;font-size:8px;padding:0 18px;cursor:pointer;letter-spacing:1px;white-space:nowrap;box-shadow:0 4px 0 #007878;transition:transform .1s,box-shadow .1s;}.drop-btn:hover{background:#80F8F8;}.drop-btn:active{transform:translateY(4px);box-shadow:0 0 0 #007878;}.ti{width:100%;border:1px solid;font-family:\'VT323\',monospace;font-size:22px;padding:10px 12px;outline:none;letter-spacing:1px;}.urgent-blink{animation:urgBlink 1.6s ease-in-out infinite;}.tab-panel{animation:fadeIn .18s ease both;}.cert-card{animation:certIn .3s cubic-bezier(.22,.61,.36,1) both;}.fab{position:fixed;bottom:32px;right:50%;transform:translateX(50%);width:56px;height:56px;border-radius:50%;background:#00F0F0;border:none;color:#001414;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(0,240,240,0.4);z-index:90;display:flex;align-items:center;justify-content:center;font-family:monospace;transition:transform .15s;}.fab:active{transform:translateX(50%) scale(0.92);}'}</style>
 
       {floatPts.map(function(fp){return <div key={fp.id} style={{position:'fixed',top:'42%',left:'50%',transform:'translateX(-50%)',zIndex:200,fontFamily:"'Press Start 2P', monospace",fontSize:'11px',color:th.scoreCol,textShadow:th.scoreGlow,animation:'floatUp 1.1s ease-out both',pointerEvents:'none',letterSpacing:'2px'}}>+{fp.pts}</div>;})}
@@ -774,8 +774,8 @@ export default function Tetrado(){
       {showAbout&&<AboutPage user={user} dark={dark} score={score} streak={streak} onEditProfile={function(){setShowAbout(false);setEditProfile(true);}} onOpenSettings={function(){setShowAbout(false);setShowSettings(true);}} onClose={function(){setShowAbout(false);}}/>}
       {showSettings&&<SettingsPage notifSettings={notifSettings} onSaveNotif={saveNotif} dark={dark} onToggleDark={function(){setDark(function(d){return !d;});}} onClose={function(){setShowSettings(false);}}/>}
 
-      {/* Sticky header */}
-      <div className="sticky-hdr" style={{background:th.bg,paddingLeft:'22px',paddingRight:'22px',paddingBottom:'0',borderBottom:'2px solid '+th.hdrBdr}}>
+      {/* Fixed header */}
+      <div className="sticky-hdr" style={{background:th.bg,paddingLeft:'22px',paddingRight:'22px',paddingBottom:'0',borderBottom:'2px solid '+th.hdrBdr,flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingBottom:'8px'}}>
           <div>
             <div style={{fontSize:'20px',color:th.accent,letterSpacing:'6px',marginBottom:'4px',textShadow:dark?'0 0 18px '+th.accent+'80':'none'}}>TETRADO</div>
@@ -799,7 +799,7 @@ export default function Tetrado(){
       </div>
 
       {/* Scrollable content */}
-      <div style={{paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px'}}>
+      <div ref={scrollContainerRef} style={{flex:1,overflowY:'auto',paddingLeft:'22px',paddingRight:'22px',paddingBottom:'120px',WebkitOverflowScrolling:'touch'}}>
         {tab==='active'&&<NewTaskPanel
           hint={hint} dark={dark} input={input} dueDate={dueDate} dueSelected={dueSelected} today={TODAY}
           onInput={function(v){setInput(v);setDueSelected(false);setDueDate('');}}
