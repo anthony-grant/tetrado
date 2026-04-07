@@ -564,6 +564,8 @@ export default function Tetrado(){
   var colorRef=useRef(0);
   var inputEl=useRef(null);
   var newTaskPanelRef=useRef(null);
+  var scrollContainerRef=useRef(null);
+  var dragInfoRef=useRef(null);
   var gameRef=useRef({streak:0,lastOpenDate:null,dailyCompletions:{},dailyBonusClaimed:{},streakMsClaimed:0});
 
   // Keep orderedActiveIds in sync with tasks
@@ -625,6 +627,8 @@ export default function Tetrado(){
       window.removeEventListener('mouseup',onEnd);
     };
   },[orderedActiveIds]);
+
+  var addAward=useCallback(function(award){setScore(function(s){return s+award.pts;});setAwards(function(p){return p.concat([award]);});},[]);
 
   // Check for lapsed tasks (overdue by 1+ days) and deduct 50pts each, once per task per day
   var checkLapsedTasks=useCallback(function(taskList){
